@@ -303,7 +303,7 @@ export default function App() {
               </button>
             ))}
             <div style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid #e0d8c8", fontSize: 12, color: "#b0a898", lineHeight: 1.7 }}>
-              Built by Dom Smith · 7 years Revenue Management at a major U.S. airline · Now helping small businesses capture what they're leaving on the table
+              Built by Dom Smith · 7 years Revenue Management at major corporations · Now helping small businesses capture what they're leaving on the table
             </div>
           </div>
         )}
@@ -455,7 +455,7 @@ export default function App() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 32 }}>
                 {[
                   { icon: "✗", label: "Big Consulting Firm", points: ["Junior analyst you've never met", "Generic 40-page report", "Enterprise pricing, small business budget", "One size fits all strategy", "Gone after the engagement"] },
-                  { icon: "✓", label: "Peakrate", points: ["Dom directly, every conversation", "Plain language action plan", "Multi-billion dollar strategy, small business price", "Built around your specific numbers", "Here when you need adjustments"] },
+                  { icon: "✓", label: "Peakrate", points: ["1-on-1 conversation", "Plain language action plan", "Multi-billion dollar strategy, small business price", "Built around your specific numbers", "Here when you need adjustments"] },
                 ].map((col, i) => (
                   <div key={i} style={{ background: i === 1 ? "#edf5e8" : "#f0ebe0", border: "1px solid " + (i === 1 ? "#c8d8b8" : "#ddd6c6"), padding: "20px", borderRadius: 2 }}>
                     <div style={{ fontSize: 13, color: i === 1 ? "#4a7040" : "#8a7e6e", letterSpacing: "0.05em", marginBottom: 14, fontWeight: 600 }}>{col.icon} {col.label}</div>
