@@ -303,7 +303,7 @@ export default function App() {
               </button>
             ))}
             <div style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid #e0d8c8", fontSize: 12, color: "#b0a898", lineHeight: 1.7 }}>
-              Built by Dom Smith · 7 years Revenue Management at major corporations · Now helping small businesses capture what they're leaving on the table
+              Built by Dom Smith · More than a decade of Revenue Management at major corporations · Now helping small businesses capture what they're leaving on the table
             </div>
           </div>
         )}
