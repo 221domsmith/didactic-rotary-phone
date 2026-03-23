@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 const BUSINESS_TYPES = [
   { id: 'str', label: 'Airbnb / Short-Term Rental', icon: '🏠' },
