@@ -74,7 +74,7 @@ const QUESTIONS = {
       'Not sure yet, just exploring',
     ]},
   ],
-  hotel:: [
+  hotel: [
     { id: 'rooms', label: 'How many rooms does your property have?', type: 'select', options: ['Under 20', '20-40', '41-80', '81-150', '150+'] },
     { id: 'rate', label: 'What is your average daily rate (ADR)?', type: 'select', options: ['Under $80', '$80-$120', '$121-$180', '$181-$250', '$250+'] },
     { id: 'occupancy', label: 'What is your average occupancy rate?', type: 'select', options: ['Under 45%', '45-60%', '61-72%', '73-84%', '85%+'] },
