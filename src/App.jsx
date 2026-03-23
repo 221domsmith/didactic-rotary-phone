@@ -342,7 +342,7 @@ export default function App() {
             );
           }),
           React.createElement('div', { style: { marginTop: 36, paddingTop: 20, borderTop: '1px solid #e0d8c8', fontSize: 12, color: '#b0a898', lineHeight: 1.7 } },
-            'Built by Dom Smith · 7 years Revenue Management at a major U.S. airline · Now helping small businesses capture what they are leaving on the table'
+            'Built by Dom Smith · Over a decade of experience across global airlines and major organizations · Now helping small businesses capture what they are leaving on the table'
           )
         ),
 
@@ -455,15 +455,15 @@ export default function App() {
             React.createElement('div', { style: c.lbl }, 'Why Peakrate?'),
             React.createElement('h1', { style: Object.assign({}, c.h1, { fontSize: 30, marginBottom: 20 }) }, 'You deserve the same strategy the big guys use.'),
             React.createElement('div', { style: c.gold }),
-            React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 24 } }, 'When you work with Peakrate you are not getting handed off to a junior analyst who has never run a business. You are not getting a 40-page report that sits in your inbox unread. You are getting me, Dom, directly. One on one. Someone who has sat inside the revenue management operations of one of the largest airlines in the world and who also watched his wife try to figure out why January was always so slow.'),
+            React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 24 } }, 'When you work with Peakrate you are not getting handed off to a junior analyst who has never run a business. You are not getting a 40-page report that sits in your inbox unread. You are getting me, Dom, directly. One on one. Someone who has sat inside the revenue management operations of one of the largest airlines in the world and who also watched his wife, a talented photographer, wonder why some months outperformed others with no clear reason why.'),
             React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 24 } }, 'I know both worlds. And I built this to bridge them.'),
             React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 36 } }, 'Big consulting firms charge big firm prices for big firm problems. Your business does not have a big firm problem. It has a fixable pricing and demand problem that nobody has ever walked you through. That is a different conversation, shorter, more direct, and actually useful.'),
             React.createElement('div', { style: { background: '#f0ebe0', border: '1px solid #d0c8b4', borderLeft: '3px solid #b8922e', padding: '24px 28px', borderRadius: 2, marginBottom: 32 } },
               React.createElement('div', { style: c.lbl }, 'The Background'),
               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 } },
                 [
-                  { icon: '✈️', org: 'Major U.S. Airline', role: 'Senior Revenue Management Professional', note: 'Managed multi-billion dollar fare inventory across entire markets, driving competitive pricing strategy and revenue optimization at scale.' },
-                  { icon: '🐠', org: 'Major Hospitality Organization', role: 'Hospitality Revenue Strategist', note: 'Led revenue strategy for one of the largest attractions in the country, including building ROI models for major capital investments.' },
+                  { icon: '✈️', org: 'Major U.S. Airline', role: 'Senior Revenue Management Professional', note: 'Managed billion dollar fare portfolios across the U.S. and Canada, leading pricing strategy across multiple high-volume markets simultaneously.' },
+                  { icon: '🐠', org: 'Major Hospitality Organization', role: 'Hospitality Revenue Strategist', note: 'Led revenue strategy for one of the largest attractions in the country, including building financial models and ROI frameworks for major capital investments.' },
                   { icon: '🏦', org: 'Regional Financial Institution', role: 'Financial Strategy Professional / Consumer Finance Specialist', note: 'Drove financial strategy and consumer lending performance, applying data-driven analysis to improve portfolio outcomes.' },
                 ].map(function(item, i) {
                   return React.createElement('div', { key: i },
@@ -479,7 +479,7 @@ export default function App() {
             React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 32 } },
               [
                 { icon: '✗', label: 'Big Consulting Firm', points: ['Junior analyst you have never met', 'Generic 40-page report', 'Enterprise pricing, small business budget', 'One size fits all strategy', 'Gone after the engagement'] },
-                { icon: '✓', label: 'Peakrate', points: ['Dom directly, every conversation', 'Plain language action plan', 'Multi-billion dollar strategy, small business price', 'Built around your specific numbers', 'Here when you need adjustments'] },
+                { icon: '✓', label: 'Peakrate', points: ['1-on-1 conversations, every time', 'Plain language action plan', 'Multi-billion dollar strategy, small business price', 'Built around your specific numbers', 'Here when you need adjustments'] },
               ].map(function(col, i) {
                 return React.createElement('div', { key: i, style: { background: i === 1 ? '#edf5e8' : '#f0ebe0', border: '1px solid ' + (i === 1 ? '#c8d8b8' : '#ddd6c6'), padding: '20px', borderRadius: 2 } },
                   React.createElement('div', { style: { fontSize: 13, color: i === 1 ? '#4a7040' : '#8a7e6e', letterSpacing: '0.05em', marginBottom: 14, fontWeight: 600 } }, col.icon + ' ' + col.label),
@@ -491,7 +491,7 @@ export default function App() {
             ),
             React.createElement('div', { style: { background: '#f0ebe0', border: '1px solid #d0c8b4', padding: '22px 26px', borderRadius: 2, marginBottom: 32 } },
               React.createElement('div', { style: c.lbl }, 'Where This Is Going'),
-              React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85 } }, 'Peakrate is not a side project. The vision is a full revenue management firm, a team of analysts bringing enterprise-level strategy to small and mid-size businesses across hospitality, events, and creative services. The kind of firm that makes what used to cost $50,000 accessible for $500 a month. But right now it is just me. And honestly that is a feature, not a bug. You get my full attention and someone who genuinely wants to win together, not just deliver a report and disappear.')
+              React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85 } }, 'Peakrate is not a side project. The vision is a full revenue management firm, a team of analysts bringing enterprise-level strategy to small and mid-size businesses across hospitality, events, and creative services. The kind of firm that makes what used to cost $50,000 accessible starting at $249 a month, depending on your business type. But right now it is just me. And honestly that is a feature, not a bug. You get my full attention and someone who is genuinely invested in your success, every step of the way.')
             ),
             React.createElement('div', { style: { borderTop: '1px solid #e0d8c8', paddingTop: 24 } },
               React.createElement('div', { style: { fontSize: 14, color: '#7a6e5e', fontStyle: 'italic', marginBottom: 20 } }, 'Dom Smith, Founder · Peakrate'),
