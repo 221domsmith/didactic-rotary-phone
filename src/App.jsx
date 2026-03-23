@@ -89,7 +89,7 @@ const QUESTIONS = {
       'Not sure yet, just exploring',
     ]},
   ],
-  photo:: [
+  photo: [
     { id: 'sessions', label: 'How many paid sessions do you average per month?', type: 'select', options: ['1-3', '4-6', '7-10', '11-15', '16+'] },
     { id: 'rate', label: 'What is your base session rate?', type: 'select', options: ['Under $150', '$150-$300', '$301-$500', '$501-$800', '$800+'] },
     { id: 'pricing', label: 'How do you currently set your session prices?', type: 'select', options: ['Same flat rate year-round', 'I raise prices occasionally when busy', 'I have weekday vs. weekend rates', 'I use seasonal and demand-based pricing'] },
