@@ -13,8 +13,8 @@ const LOCAL_EVENTS_QUESTIONS = [
     label: 'Are you actively monitoring local events, concerts, festivals, conventions, and sports, and adjusting your pricing around them?',
     type: 'select',
     options: [
-      'No, I don't track local events at all',
-      'I'm aware of them but don't adjust pricing',
+      'No, I do not track local events at all',
+      'I am aware of them but do not adjust pricing',
       'I adjust for major events occasionally',
       'Yes, I have a system for tracking and pricing around events',
     ],
@@ -24,10 +24,10 @@ const LOCAL_EVENTS_QUESTIONS = [
     label: 'Have you ever had a revenue spike from a one-time local event that you may have assumed would repeat the following year?',
     type: 'select',
     options: [
-      'No spike I'm aware of',
+      'No spike I am aware of',
       'Yes, and I assumed that revenue would repeat the following year',
       'Yes, and I knew it was one-time and planned accordingly',
-      'Not sure, I don't track revenue by date closely enough to know',
+      'Not sure, I do not track revenue by date closely enough to know',
     ],
   },
   {
@@ -60,7 +60,7 @@ const QUESTIONS = {
     ]},
   ],
   venue: [
-    { id: 'capacity', label: 'What is your venue's max capacity?', type: 'select', options: ['Under 50 guests', '50-100 guests', '101-200 guests', '201-500 guests', '500+ guests'] },
+    { id: 'capacity', label: 'What is your venue max capacity?', type: 'select', options: ['Under 50 guests', '50-100 guests', '101-200 guests', '201-500 guests', '500+ guests'] },
     { id: 'rate', label: 'What is your average booking rate per event?', type: 'select', options: ['Under $1,000', '$1,000-$2,500', '$2,500-$5,000', '$5,000-$10,000', '$10,000+'] },
     { id: 'occupancy', label: 'What percentage of your available dates are booked monthly?', type: 'select', options: ['Under 30%', '30-50%', '51-65%', '66-80%', '80%+'] },
     { id: 'pricing', label: 'How do you structure your pricing?', type: 'select', options: ['One flat rate for everything', 'Weekday vs. weekend rates', 'Seasonal pricing tiers', 'Fully dynamic by demand'] },
@@ -116,8 +116,8 @@ const scoreAnswer = (questionId, answer) => {
     revpar: ['Not tracking'],
     slowseason: ['Nothing, I just wait for bookings', 'Lower prices across the board'],
     packages: ['No, one offering only'],
-    events_awareness: ['No, I don't track local events at all', 'I'm aware of them but don't adjust pricing'],
-    events_onetime: ['Yes, and I assumed that revenue would repeat the following year', 'Not sure, I don't track revenue by date closely enough to know'],
+    events_awareness: ['No, I do not track local events at all', 'I am aware of them but do not adjust pricing'],
+    events_onetime: ['Yes, and I assumed that revenue would repeat the following year', 'Not sure, I do not track revenue by date closely enough to know'],
     events_calendar: ['No forward planning at all', 'I check occasionally but nothing systematic'],
   };
   const high = {
@@ -181,9 +181,9 @@ const getLeakage = (answers, bType) => {
 };
 
 const getScoreLabel = (s) => {
-  if (s <= 30) return { label: 'Critical', color: '#ef4444', bg: '#fdf0f0', desc: 'Your revenue strategy has significant gaps. You're likely leaving 25-40% of potential revenue uncaptured every year.' };
+  if (s <= 30) return { label: 'Critical', color: '#ef4444', bg: '#fdf0f0', desc: 'Your revenue strategy has significant gaps. You are likely leaving 25-40% of potential revenue uncaptured every year.' };
   if (s <= 55) return { label: 'Developing', color: '#f97316', bg: '#fdf4ee', desc: 'You have some pricing awareness but no systematic strategy. Structured RM could move you 15-25% higher.' };
-  if (s <= 75) return { label: 'Functional', color: '#eab308', bg: '#fdfae8', desc: 'You're doing better than most, but there are clear gaps in your peak and off-peak strategy.' };
+  if (s <= 75) return { label: 'Functional', color: '#eab308', bg: '#fdfae8', desc: 'You are doing better than most, but there are clear gaps in your peak and off-peak strategy.' };
   return { label: 'Optimized', color: '#22c55e', bg: '#f0fdf4', desc: 'Strong foundation. Fine-tuning your channel mix and demand forecasting could push you to the next tier.' };
 };
 
@@ -194,13 +194,13 @@ const getRecs = (answers, bType) => {
   if (bType === 'photo' && (answers.packages?.includes('one offering') || answers.packages?.includes('Two'))) recs.push({ text: 'Build at least three distinct packages with clear value differentiation. Your highest-tier package should be priced so that even 2 bookings per month makes a material impact on your annual revenue.', event: false });
   if (bType === 'photo' && (answers.slowseason?.includes('Nothing') || answers.slowseason?.includes('Lower'))) recs.push({ text: 'Stop discounting across the board in slow season. It trains clients to wait for deals. Instead, run limited mini-session events in January and February to generate volume without touching your standard rate card.', event: false });
   if (answers.seasons?.includes('No') || answers.seasons?.includes('Never')) recs.push({ text: 'Build a demand calendar. Identify your top 10 highest-demand dates and set rate floors 30-50% above your base rate for those windows.', event: false });
-  if (answers.lastchange?.includes('Never') || answers.lastchange?.includes('year')) recs.push({ text: 'Your pricing hasn't kept pace with the market. Inflation alone justifies a 10-15% increase, but more importantly, your competitive positioning may have shifted entirely since your last review.', event: false });
-  if (bType === 'hotel' && answers.revpar?.includes('Not tracking')) recs.push({ text: 'Start tracking RevPAR weekly. You cannot optimize what you don't measure. RevPAR is the single most important metric for your property's revenue health.', event: false });
-  if (bType === 'str' && answers.pricing?.includes('Smart Pricing')) recs.push({ text: 'Airbnb Smart Pricing optimizes for Airbnb's booking volume, not your profit. Add manual rate floors for your top 20 demand dates and override Smart Pricing entirely during local events.', event: false });
-  if (answers.events_awareness?.includes('No') || answers.events_awareness?.includes('aware')) recs.push({ text: 'You're missing event-driven demand spikes. Set up a Google Calendar with local events 12 months out, concerts, festivals, conventions, sports. Any event drawing 5,000 or more people within 10 miles is a pricing opportunity you should act on weeks in advance.', event: true });
-  if (answers.events_onetime?.includes('assumed')) recs.push({ text: 'Forecast risk: You had a one-time event spike and may have built that into your baseline. That revenue won't repeat. Remove that period from your normal year-over-year comparison, otherwise you're pricing against demand that no longer exists.', event: true });
-  if (answers.events_onetime?.includes('Not sure')) recs.push({ text: 'You don't have enough visibility into what's driving your revenue peaks. Start tagging bookings by what was happening locally that week. You'll find patterns that completely change how you price.', event: true });
-  if (answers.events_calendar?.includes('No forward') || answers.events_calendar?.includes('occasionally')) recs.push({ text: 'Build a 12-month demand calendar now. Forward visibility is the foundation of every RM strategy. Without it you're always reacting to demand instead of pricing ahead of it.', event: true });
+  if (answers.lastchange?.includes('Never') || answers.lastchange?.includes('year')) recs.push({ text: 'Your pricing has not kept pace with the market. Inflation alone justifies a 10-15% increase, but more importantly, your competitive positioning may have shifted entirely since your last review.', event: false });
+  if (bType === 'hotel' && answers.revpar?.includes('Not tracking')) recs.push({ text: 'Start tracking RevPAR weekly. You cannot optimize what you do not measure. RevPAR is the single most important metric for your property revenue health.', event: false });
+  if (bType === 'str' && answers.pricing?.includes('Smart Pricing')) recs.push({ text: 'Airbnb Smart Pricing optimizes for Airbnb booking volume, not your profit. Add manual rate floors for your top 20 demand dates and override Smart Pricing entirely during local events.', event: false });
+  if (answers.events_awareness?.includes('No') || answers.events_awareness?.includes('aware')) recs.push({ text: 'You are missing event-driven demand spikes. Set up a Google Calendar with local events 12 months out, concerts, festivals, conventions, sports. Any event drawing 5,000 or more people within 10 miles is a pricing opportunity you should act on weeks in advance.', event: true });
+  if (answers.events_onetime?.includes('assumed')) recs.push({ text: 'Forecast risk: You had a one-time event spike and may have built that into your baseline. That revenue will not repeat. Remove that period from your normal year-over-year comparison, otherwise you are pricing against demand that no longer exists.', event: true });
+  if (answers.events_onetime?.includes('Not sure')) recs.push({ text: 'You do not have enough visibility into what is driving your revenue peaks. Start tagging bookings by what was happening locally that week. You'll find patterns that completely change how you price.', event: true });
+  if (answers.events_calendar?.includes('No forward') || answers.events_calendar?.includes('occasionally')) recs.push({ text: 'Build a 12-month demand calendar now. Forward visibility is the foundation of every RM strategy. Without it you are always reacting to demand instead of pricing ahead of it.', event: true });
   return recs.slice(0, 5);
 };
 
@@ -380,9 +380,9 @@ export default function App() {
         {step === 'landing' && (
           <div>
             <div style={{ ...c.lbl, marginBottom: 14 }}>Free Revenue Audit, 3 Minutes</div>
-            <h1 style={c.h1}>Find out how much<br />you're leaving behind.</h1>
+            <h1 style={c.h1}>Find out how much<br />you are leaving behind.</h1>
             <div style={c.gold} />
-            <p style={c.sub}>Answer a few questions about your business. We'll calculate your revenue score, estimate your annual gap, identify your event demand blind spots, and show you exactly where to start.</p>
+            <p style={c.sub}>Answer a few questions about your business. We will calculate your revenue score, estimate your annual gap, identify your event demand blind spots, and show you exactly where to start.</p>
             <div style={{ ...c.lbl, marginBottom: 16 }}>Select your business type</div>
             {BUSINESS_TYPES.map(bt => (
               <button key={bt.id} style={c.bizBtn(bt.id)} onMouseEnter={() => setHovBiz(bt.id)} onMouseLeave={() => setHovBiz(null)} onClick={() => selectBiz(bt.id)}>
@@ -392,7 +392,7 @@ export default function App() {
               </button>
             ))}
             <div style={{ marginTop: 36, paddingTop: 20, borderTop: '1px solid #e0d8c8', fontSize: 12, color: '#b0a898', lineHeight: 1.7 }}>
-              Built by Dom Smith · 7 years Revenue Management at a major U.S. airline · Now helping small businesses capture what they're leaving on the table
+              Built by Dom Smith · 7 years Revenue Management at a major U.S. airline · Now helping small businesses capture what they are leaving on the table
             </div>
           </div>
         )}
@@ -415,7 +415,7 @@ export default function App() {
             {currentQ === baseQCount && (
               <div style={{ background: '#fdfae8', border: '1px solid #d8d0be', borderLeft: '3px solid #b8922e', padding: '14px 18px', borderRadius: 2, marginBottom: 26 }}>
                 <div style={{ fontSize: 10, color: '#b8922e', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 5 }}>Now: Event Demand Analysis</div>
-                <div style={{ fontSize: 13, color: '#7a6e5e', lineHeight: 1.65 }}>One-time events can inflate your historical data and distort your forecast for years. These questions identify whether you're pricing around local demand or being misled by it.</div>
+                <div style={{ fontSize: 13, color: '#7a6e5e', lineHeight: 1.65 }}>One-time events can inflate your historical data and distort your forecast for years. These questions identify whether you are pricing around local demand or being misled by it.</div>
               </div>
             )}
 
@@ -454,7 +454,7 @@ export default function App() {
               <div style={{ fontSize: 12, color: '#8a7e6e', marginTop: 4, fontStyle: 'italic' }}>Based on your current strategy vs. optimized RM benchmarks for your business type</div>
               {answers.events_onetime?.includes('assumed') && (
                 <div style={{ marginTop: 12, padding: '10px 14px', background: '#fdf0f0', border: '1px solid #fca5a5', borderRadius: 2, fontSize: 12, color: '#dc2626', lineHeight: 1.6 }}>
-                  Forecast risk: A one-time event spike may be inflating your revenue baseline. That demand won't return, and pricing as if it will costs you.
+                  Forecast risk: A one-time event spike may be inflating your revenue baseline. That demand will not return, and pricing as if it will costs you.
                 </div>
               )}
             </div>
@@ -644,13 +644,13 @@ export default function App() {
               <h1 style={{ ...c.h1, fontSize: 30, marginBottom: 20 }}>You deserve the same strategy the big guys use.</h1>
               <div style={c.gold} />
               <div style={{ fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 24 }}>
-                When you work with Peakrate you're not getting handed off to a junior analyst who's never run a business. You're not getting a 40-page report that sits in your inbox unread. You're getting me, Dom, directly. One on one. Someone who has sat inside the revenue management operations of one of the largest airlines in the world and who also watched his wife try to figure out why January was always so slow.
+                When you work with Peakrate you are not getting handed off to a junior analyst who is never run a business. You are not getting a 40-page report that sits in your inbox unread. You are getting me, Dom, directly. One on one. Someone who has sat inside the revenue management operations of one of the largest airlines in the world and who also watched his wife try to figure out why January was always so slow.
               </div>
               <div style={{ fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 24 }}>
                 I know both worlds. And I built this to bridge them.
               </div>
               <div style={{ fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 36 }}>
-                Big consulting firms charge big firm prices for big firm problems. Your business doesn't have a big firm problem. It has a fixable pricing and demand problem that nobody's ever walked you through. That's a different conversation, shorter, more direct, and actually useful.
+                Big consulting firms charge big firm prices for big firm problems. Your business does not have a big firm problem. It has a fixable pricing and demand problem that nobody has ever walked you through. That is a different conversation, shorter, more direct, and actually useful.
               </div>
 
               <div style={{ background: '#f0ebe0', border: '1px solid #d0c8b4', borderLeft: '3px solid #b8922e', padding: '24px 28px', borderRadius: 2, marginBottom: 32 }}>
@@ -674,7 +674,7 @@ export default function App() {
               <div style={c.lbl}>The Difference</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 32 }}>
                 {[
-                  { icon: '✗', label: 'Big Consulting Firm', points: ['Junior analyst you've never met', 'Generic 40-page report', 'Enterprise pricing, small business budget', 'One size fits all strategy', 'Gone after the engagement'] },
+                  { icon: '✗', label: 'Big Consulting Firm', points: ['Junior analyst you have never met', 'Generic 40-page report', 'Enterprise pricing, small business budget', 'One size fits all strategy', 'Gone after the engagement'] },
                   { icon: '✓', label: 'Peakrate', points: ['Dom directly, every conversation', 'Plain language action plan', 'Multi-billion dollar strategy, small business price', 'Built around your specific numbers', 'Here when you need adjustments'] },
                 ].map((col, i) => (
                   <div key={i} style={{ background: i === 1 ? '#edf5e8' : '#f0ebe0', border: '1px solid ' + (i === 1 ? '#c8d8b8' : '#ddd6c6'), padding: '20px', borderRadius: 2 }}>
@@ -689,7 +689,7 @@ export default function App() {
               <div style={{ background: '#f0ebe0', border: '1px solid #d0c8b4', padding: '22px 26px', borderRadius: 2, marginBottom: 32 }}>
                 <div style={c.lbl}>Where This Is Going</div>
                 <div style={{ fontSize: 15, color: '#6a5e4e', lineHeight: 1.85 }}>
-                  Peakrate isn't a side project. The vision is a full revenue management firm, a team of analysts bringing enterprise-level strategy to small and mid-size businesses across hospitality, events, and creative services. The kind of firm that makes what used to cost $50,000 accessible for $500 a month. But right now it's just me. And honestly that's a feature, not a bug. You get my full attention and someone who genuinely wants to win together, not just deliver a report and disappear.
+                  Peakrate is not a side project. The vision is a full revenue management firm, a team of analysts bringing enterprise-level strategy to small and mid-size businesses across hospitality, events, and creative services. The kind of firm that makes what used to cost $50,000 accessible for $500 a month. But right now it is just me. And honestly that is a feature, not a bug. You get my full attention and someone who genuinely wants to win together, not just deliver a report and disappear.
                 </div>
               </div>
 
