@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 
 const BUSINESS_TYPES = [
+  { id: '', label: 'Select your business type…', icon: '' },
   { id: 'str', label: 'Airbnb / Short-Term Rental', icon: '🏠' },
   { id: 'venue', label: 'Event Venue', icon: '🎪' },
   { id: 'hotel', label: 'Boutique Hotel', icon: '🏨' },
   { id: 'photo', label: 'Photographer / Videographer', icon: '📷' },
+  { id: 'restaurant', label: 'Restaurant Owner', icon: '🍽️' },
 ];
 
 const LOCAL_EVENTS_QUESTIONS = [
@@ -93,6 +95,18 @@ const QUESTIONS = {
     { id: 'photo_peakseason', label: 'Do you raise your rates during peak season, spring and fall, when demand for photographers is highest?', type: 'select', options: ['No, same rate year-round', 'I have thought about it but have not done it', 'I raise rates slightly', 'Yes, I have clear peak and off-peak pricing'] },
     { id: 'service_interest', label: 'What kind of help are you most interested in?', type: 'select', options: ['A one-time pricing audit and action plan', 'Monthly strategy calls to review performance', 'Someone to manage my pricing for me hands-off', 'Not sure yet, just exploring'] },
   ],
+  restaurant: [
+    { id: 'covers', label: 'How many covers (guests) do you serve on an average dinner service?', type: 'select', options: ['Under 30', '30-60', '61-100', '101-175', '175+'] },
+    { id: 'check_avg', label: 'What is your average check per guest?', type: 'select', options: ['Under $15', '$15-$30', '$31-$50', '$51-$80', '$80+'] },
+    { id: 'food_cost', label: 'Do you know your food cost percentage on your top-selling items?', type: 'select', options: ['No, I have never calculated it', 'Roughly, but not by individual item', 'Yes, for some items', 'Yes, I track food cost per item regularly'] },
+    { id: 'menu_pricing', label: 'When did you last raise your menu prices?', type: 'select', options: ['Never or not sure', 'More than 2 years ago', '1-2 years ago', 'Within the last year'] },
+    { id: 'delivery', label: 'Do you offer delivery through a third-party platform like DoorDash or Uber Eats?', type: 'select', options: ['No', 'Yes, same prices as dine-in', 'Yes, slightly higher than dine-in', 'Yes, with a full markup to cover platform fees'] },
+    { id: 'slow_days', label: 'Do you have a strategy to drive revenue on your slowest days, typically Monday-Wednesday?', type: 'select', options: ['No, those days are just slow', 'We run generic specials sometimes', 'We have day-specific promotions', 'Yes, targeted offers tied to actual demand data'] },
+    { id: 'menu_mix', label: 'Do you know which menu items are your most profitable versus just your most popular?', type: 'select', options: ['No, I have not analyzed it', 'I have a rough sense but no data', 'I have analyzed it once', 'Yes, I review menu mix performance regularly'] },
+    { id: 'daypart', label: 'Are you actively managing revenue across different day-parts, like lunch, happy hour, and dinner separately?', type: 'select', options: ['No, we treat all service the same', 'We track them separately but do not act on it', 'We price differently by day-part occasionally', 'Yes, each day-part has its own pricing and promotion strategy'] },
+    { id: 'lastchange', label: 'When did you last do a full review of your pricing and menu performance?', type: 'select', options: ['Never', 'Over a year ago', '6-12 months ago', 'Within the last 6 months'] },
+    { id: 'service_interest', label: 'What kind of help are you most interested in?', type: 'select', options: ['A one-time pricing audit and action plan', 'Monthly strategy calls to review performance', 'Someone to manage my pricing for me hands-off', 'Not sure yet, just exploring'] },
+  ],
 };
 
 const scoreAnswer = (questionId, answer) => {
@@ -107,6 +121,12 @@ const scoreAnswer = (questionId, answer) => {
     events_awareness: ['No, I do not track local events at all', 'I am aware of them but do not adjust pricing'],
     events_onetime: ['Yes, and I assumed that revenue would repeat the following year', 'Not sure, I do not track revenue by date closely enough to know'],
     events_calendar: ['No forward planning at all', 'I check occasionally but nothing systematic'],
+    food_cost: ['No, I have never calculated it', 'Roughly, but not by individual item'],
+    menu_pricing: ['Never or not sure', 'More than 2 years ago'],
+    delivery: ['Yes, same prices as dine-in'],
+    slow_days: ['No, those days are just slow', 'We run generic specials sometimes'],
+    menu_mix: ['No, I have not analyzed it', 'I have a rough sense but no data'],
+    daypart: ['No, we treat all service the same', 'We track them separately but do not act on it'],
   };
   const high = {
     pricing: ['I use a dynamic pricing tool', 'Fully dynamic by demand', 'Dedicated RM strategy', 'I use seasonal and demand-based pricing'],
@@ -119,6 +139,12 @@ const scoreAnswer = (questionId, answer) => {
     events_awareness: ['Yes, I have a system for tracking and pricing around events'],
     events_onetime: ['Yes, and I knew it was one-time and planned accordingly'],
     events_calendar: ['Yes, I actively manage a 12-month demand calendar'],
+    food_cost: ['Yes, I track food cost per item regularly'],
+    menu_pricing: ['Within the last year'],
+    delivery: ['Yes, with a full markup to cover platform fees'],
+    slow_days: ['Yes, targeted offers tied to actual demand data'],
+    menu_mix: ['Yes, I review menu mix performance regularly'],
+    daypart: ['Yes, each day-part has its own pricing and promotion strategy'],
   };
   if (low[questionId] && low[questionId].includes(answer)) return 1;
   if (high[questionId] && high[questionId].includes(answer)) return 4;
@@ -126,6 +152,21 @@ const scoreAnswer = (questionId, answer) => {
 };
 
 const getLeakage = (answers, bType) => {
+  if (bType === 'restaurant') {
+    const coversMap = { 'Under 30': 20, '30-60': 45, '61-100': 80, '101-175': 135, '175+': 200 };
+    const checkMap = { 'Under $15': 12, '$15-$30': 22, '$31-$50': 40, '$51-$80': 65, '$80+': 100 };
+    const covers = coversMap[answers.covers] || 60;
+    const check = checkMap[answers.check_avg] || 35;
+    const annualRevenue = covers * check * 300;
+    let leakPct = 0;
+    if (answers.menu_pricing && (answers.menu_pricing.includes('Never') || answers.menu_pricing.includes('2 years'))) leakPct += 0.12;
+    if (answers.food_cost && answers.food_cost.includes('never')) leakPct += 0.08;
+    if (answers.delivery && answers.delivery.includes('same prices')) leakPct += 0.07;
+    if (answers.slow_days && (answers.slow_days.includes('just slow') || answers.slow_days.includes('generic'))) leakPct += 0.09;
+    if (answers.menu_mix && (answers.menu_mix.includes('have not') || answers.menu_mix.includes('rough sense'))) leakPct += 0.06;
+    if (answers.daypart && (answers.daypart.includes('treat all') || answers.daypart.includes('do not act'))) leakPct += 0.07;
+    return Math.round((annualRevenue * Math.max(leakPct, 0.10)) / 1000) * 1000;
+  }
   const rateMap = {
     str: { 'Under $75': 65, '$75-$125': 100, '$126-$200': 160, '$201-$350': 275, '$350+': 400 },
     venue: { 'Under $1,000': 700, '$1,000-$2,500': 1750, '$2,500-$5,000': 3750, '$5,000-$10,000': 7500, '$10,000+': 12000 },
@@ -176,6 +217,15 @@ const getScoreLabel = (s) => {
 
 const getRecs = (answers, bType) => {
   const recs = [];
+  if (bType === 'restaurant') {
+    if (answers.menu_pricing && (answers.menu_pricing.includes('Never') || answers.menu_pricing.includes('2 years'))) recs.push({ text: 'Your menu prices have not kept pace with inflation or your own cost increases. A 10-15% price adjustment on your top-selling items alone can move your margins significantly without losing regulars who value what you offer.', event: false });
+    if (answers.food_cost && (answers.food_cost.includes('never') || answers.food_cost.includes('Roughly'))) recs.push({ text: 'You cannot price profitably without knowing your food cost per item. Start with your top 10 sellers. If any of them are running above 35% food cost, you are subsidizing your customers every time they order.', event: false });
+    if (answers.delivery && answers.delivery.includes('same prices')) recs.push({ text: 'Third-party delivery platforms take 15-30% of every order. If you are charging the same prices as dine-in, you are losing money on every delivery ticket. Mark up your delivery menu by at least 15-20% immediately.', event: false });
+    if (answers.menu_mix && (answers.menu_mix.includes('have not') || answers.menu_mix.includes('rough sense'))) recs.push({ text: 'Your most popular item and your most profitable item are almost certainly not the same dish. Run a simple menu mix analysis this week. Items that sell well but have low margin are quietly draining your bottom line every service.', event: false });
+    if (answers.slow_days && (answers.slow_days.includes('just slow') || answers.slow_days.includes('generic'))) recs.push({ text: 'Slow weeknights are a fixable problem, not a fact of life. A targeted Monday or Tuesday offer, designed around a specific reason to come in rather than a generic discount, can fill covers without training your regulars to wait for deals.', event: false });
+    if (answers.daypart && (answers.daypart.includes('treat all') || answers.daypart.includes('do not act'))) recs.push({ text: 'Lunch, happy hour, and dinner are three different businesses running under the same roof. Each has its own cost structure, customer type, and revenue potential. Treating them identically means you are under-optimizing all three.', event: false });
+    return recs.slice(0, 5);
+  }
   const isStatic = answers.pricing && (answers.pricing.includes('flat') || answers.pricing.includes('Same') || answers.pricing.includes('Static') || answers.pricing.includes('year-round'));
   if (isStatic) recs.push({ text: bType === 'photo' ? 'Move away from a single flat rate. A three-tier package structure, mini, standard, premium, with seasonal pricing is the fastest way to increase annual revenue without booking more clients.' : 'Implement a three-tier rate structure: base, peak, and off-peak. Static pricing is the single biggest revenue leak for your business type.', event: false });
   if (bType === 'photo' && answers.packages && (answers.packages.includes('one offering') || answers.packages.includes('Two'))) recs.push({ text: 'Build at least three distinct packages with clear value differentiation. Your highest-tier package should be priced so that even 2 bookings per month makes a material impact on your annual revenue.', event: false });
@@ -191,100 +241,118 @@ const getRecs = (answers, bType) => {
   return recs.slice(0, 5);
 };
 
-const getPricing = (answers, bType, score) => {
-  let auditStart = '$299';
-  let retainerStart = '$399';
-  let doneStart = '$599';
-  let complexity = 'Standard scope';
-  const isMultiProperty = bType === 'str' && answers.rooms && answers.rooms !== '1';
-  if (bType === 'photo') {
-    auditStart = '$199'; retainerStart = '$249'; doneStart = '$399'; complexity = 'Photographer / single operator';
-  } else if (bType === 'venue') {
-    auditStart = '$299'; retainerStart = '$399'; doneStart = '$599'; complexity = 'Event venue';
-  } else if (bType === 'str' && !isMultiProperty) {
-    auditStart = '$299'; retainerStart = '$399'; doneStart = '$599'; complexity = 'Single STR property';
-  } else if (isMultiProperty) {
-    auditStart = '$499'; retainerStart = '$699'; doneStart = '$999'; complexity = 'Multi-property STR portfolio';
-  } else if (bType === 'hotel') {
-    auditStart = '$499'; retainerStart = '$799'; doneStart = '$1,200'; complexity = 'Boutique hotel';
+const sendEmailViaFormspree = async (contact, bType, score, leakage, recs, aiInsight) => {
+  const typeLabel = { str: 'Airbnb / STR', venue: 'Event Venue', hotel: 'Boutique Hotel', photo: 'Photographer / Videographer', restaurant: 'Restaurant Owner' }[bType] || '';
+  const recsText = recs.map((r, i) => `${i + 1}. ${r.text}`).join('\n\n');
+  const leakLabel = leakage <= 5000 ? 'Under $5K/yr' : leakage <= 15000 ? '$5K–$15K/yr' : leakage <= 40000 ? '$15K–$40K/yr' : '$40K+/yr';
+  const body = {
+    name: contact.name,
+    email: contact.email,
+    phone: contact.phone || 'Not provided',
+    _subject: `Peakrate Revenue Audit Results — ${contact.name}`,
+    message: `Hi ${contact.name},\n\nHere are your Peakrate Revenue Audit results.\n\nBusiness Type: ${typeLabel}\nRevenue Score: ${score}/100\nEstimated Annual Gap: ${leakLabel}\n\nConsultant's Read:\n${aiInsight}\n\nTop Recommendations:\n${recsText}\n\nNext step: Book your free 30-minute consultation at https://calendly.com/peakrate/30min\n\n— Dom Smith, Peakrate`,
+  };
+  try {
+    await fetch('https://formspree.io/f/YOUR_FORMSPREE_ID', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    console.error('Formspree error', e);
   }
-  if (score <= 30) { complexity = complexity + ' (elevated complexity)'; }
-  return { auditStart: auditStart, retainerStart: retainerStart, doneStart: doneStart, complexity: complexity };
 };
 
 export default function App() {
   const [step, setStep] = useState('landing');
-  const [bType, setBType] = useState(null);
+  const [bType, setBType] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState({});
   const [score, setScore] = useState(0);
   const [leakage, setLeakage] = useState(0);
   const [contact, setContact] = useState({ name: '', email: '', phone: '' });
-  const [reportDone, setReportDone] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [consultDone, setConsultDone] = useState(false);
   const [aiInsight, setAiInsight] = useState('');
   const [loadingAI, setLoadingAI] = useState(false);
   const [anim, setAnim] = useState(true);
-  const [hovBiz, setHovBiz] = useState(null);
   const [hovOpt, setHovOpt] = useState(null);
   const [hovNav, setHovNav] = useState(false);
-  const [pricing, setPricing] = useState({ auditStart: '$299', retainerStart: '$399', doneStart: '$599', complexity: '' });
+  const [pendingRecs, setPendingRecs] = useState([]);
+  const [unlocking, setUnlocking] = useState(false);
 
   const questions = bType ? QUESTIONS[bType] : [];
-  const baseQCount = bType === 'photo' ? questions.length - 1 : questions.length - LOCAL_EVENTS_QUESTIONS.length;
-  const isEventQ = currentQ >= baseQCount && questions.length > 0 && bType !== 'photo';
+  const baseQCount = bType === 'photo' || bType === 'restaurant' ? questions.length : questions.length - LOCAL_EVENTS_QUESTIONS.length;
+  const isEventQ = currentQ >= baseQCount && questions.length > 0 && bType !== 'photo' && bType !== 'restaurant';
 
-  const go = (fn) => { setAnim(false); setTimeout(function() { fn(); setAnim(true); }, 220); };
-  const selectBiz = (type) => go(function() { setBType(type); setStep('questions'); setCurrentQ(0); setAnswers({}); });
+  const go = (fn) => { setAnim(false); setTimeout(() => { fn(); setAnim(true); }, 220); };
+
+  const selectBiz = (id) => { if (!id) return; setBType(id); setDropdownOpen(false); };
+
+  const startAudit = () => { if (!bType) return; go(() => { setStep('questions'); setCurrentQ(0); setAnswers({}); }); };
 
   const answer = (qId, val) => {
-    const next = Object.assign({}, answers, { [qId]: val });
+    const next = { ...answers, [qId]: val };
     setAnswers(next);
     if (currentQ < questions.length - 1) {
-      go(function() { setCurrentQ(currentQ + 1); });
+      go(() => setCurrentQ(currentQ + 1));
     } else {
-      const total = questions.reduce(function(a, q) { return a + scoreAnswer(q.id, next[q.id] || ''); }, 0);
+      const total = questions.reduce((a, q) => a + scoreAnswer(q.id, next[q.id] || ''), 0);
       const pct = Math.round((total / (questions.length * 4)) * 100);
       const leak = getLeakage(next, bType);
-      const priceRec = getPricing(next, bType, pct);
+      const recs = getRecs(next, bType);
       setScore(pct);
       setLeakage(leak);
-      setPricing(priceRec);
+      setPendingRecs(recs);
       fetchAI(next, bType, pct, leak);
-      go(function() { setStep('results'); });
+      go(() => setStep('results'));
     }
   };
 
-  const fetchAI = function(ans, bt, pct, leak) {
+  const fetchAI = (ans, bt, pct, leak) => {
     setLoadingAI(true);
-    const labelMap = { str: 'Airbnb/short-term rental', venue: 'event venue', hotel: 'boutique hotel', photo: 'photographer or videographer' };
+    const labelMap = { str: 'Airbnb/short-term rental', venue: 'event venue', hotel: 'boutique hotel', photo: 'photographer or videographer', restaurant: 'restaurant owner' };
     const label = labelMap[bt] || bt;
-    const summary = Object.entries(ans).map(function(e) { return e[0] + ': ' + e[1]; }).join(', ');
+    const summary = Object.entries(ans).map(([k, v]) => `${k}: ${v}`).join(', ');
     const anomaly = ans.events_onetime && ans.events_onetime.includes('assumed') ? ' Flag the one-time event revenue anomaly risk specifically.' : '';
-    const prompt = 'You are Dom Smith, a revenue management consultant with 7 years at a major U.S. airline. A ' + label + ' owner just completed a revenue audit. Score: ' + pct + '/100. Estimated annual revenue gap: $' + leak.toLocaleString() + '. Their answers: ' + summary + '.' + anomaly + ' Write 2-3 sharp, direct sentences. Lead with their single biggest revenue leak. End with one specific action they can take this week. Sound like a straight-talking consultant, not a chatbot. No preamble, no lists.';
+    const restaurantCtx = bt === 'restaurant' ? ' Focus on menu engineering, food cost gaps, and delivery margin loss as the most likely culprits.' : '';
+    const prompt = `You are Dom Smith, a revenue management consultant with 7 years at a major U.S. airline. A ${label} just completed a revenue audit. Score: ${pct}/100. Estimated annual revenue gap: $${leak.toLocaleString()}. Their answers: ${summary}.${anomaly}${restaurantCtx} Write 2-3 sharp, direct sentences. Lead with their single biggest revenue leak. End with one specific action they can take this week. Sound like a straight-talking consultant, not a chatbot. No preamble, no lists.`;
     fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }),
-    }).then(function(res) { return res.json(); }).then(function(data) {
-      const block = data.content && data.content.find(function(b) { return b.type === 'text'; });
+    }).then(r => r.json()).then(data => {
+      const block = data.content && data.content.find(b => b.type === 'text');
       setAiInsight(block ? block.text : '');
       setLoadingAI(false);
-    }).catch(function() { setAiInsight(''); setLoadingAI(false); });
+    }).catch(() => { setAiInsight(''); setLoadingAI(false); });
   };
 
-  const reset = function() {
-    go(function() {
-      setStep('landing'); setBType(null); setAnswers({}); setScore(0); setLeakage(0);
-      setReportDone(false); setConsultDone(false); setAiInsight(''); setCurrentQ(0);
-      setPricing({ auditStart: '$299', retainerStart: '$399', doneStart: '$599', complexity: '' });
+  const submitUnlock = async () => {
+    if (!contact.email || !contact.name) return;
+    setUnlocking(true);
+    await sendEmailViaFormspree(contact, bType, score, leakage, pendingRecs, aiInsight);
+    setEmailSent(true);
+    setUnlocked(true);
+    setUnlocking(false);
+  };
+
+  const reset = () => {
+    go(() => {
+      setStep('landing'); setBType(''); setAnswers({}); setScore(0); setLeakage(0);
+      setUnlocked(false); setEmailSent(false); setConsultDone(false);
+      setAiInsight(''); setCurrentQ(0); setPendingRecs([]);
     });
   };
 
   const si = getScoreLabel(score);
-  const recs = bType ? getRecs(answers, bType) : [];
+  const recs = pendingRecs;
   const progress = questions.length > 0 ? (currentQ / questions.length) * 100 : 0;
-  const typeLabel = { str: 'Airbnb / STR', venue: 'Event Venue', hotel: 'Boutique Hotel', photo: 'Photographer / Videographer' }[bType] || '';
+  const typeLabel = { str: 'Airbnb / STR', venue: 'Event Venue', hotel: 'Boutique Hotel', photo: 'Photographer / Videographer', restaurant: 'Restaurant Owner' }[bType] || '';
+  const selectedLabel = BUSINESS_TYPES.find(b => b.id === bType);
+  const leakLabel = leakage <= 5000 ? 'Under $5K/yr' : leakage <= 15000 ? '$5K–$15K/yr' : leakage <= 40000 ? '$15K–$40K/yr' : '$40K+/yr';
 
   const c = {
     wrap: { minHeight: '100vh', background: '#faf7f2', color: '#1a1410', fontFamily: 'Georgia, Times New Roman, serif', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 20px 80px' },
@@ -305,198 +373,293 @@ export default function App() {
     sBtn: { background: 'transparent', color: '#b8922e', border: '1px solid #b8922e', borderRadius: 2, padding: '13px 28px', fontSize: 13, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Georgia, serif', width: '100%', marginBottom: 9 },
     divider: { width: '100%', height: 1, background: '#ddd6c4', margin: '26px 0' },
     back: { background: 'none', border: 'none', color: '#9a8e7e', fontSize: 12, cursor: 'pointer', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'Georgia, serif', padding: 0 },
-    ok: { background: '#f0fdf4', border: '1px solid #22c55e', borderRadius: 2, padding: '16px 20px', marginTop: 8, fontSize: 13, color: '#166534', lineHeight: 1.65 },
   };
 
-  const bizBtnStyle = function(id) {
-    return { width: '100%', background: hovBiz === id ? '#e8e2d4' : '#f5f0e8', border: '1px solid ' + (hovBiz === id ? '#b8922e' : '#d8d0be'), borderRadius: 3, padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', marginBottom: 10, transition: 'all 0.18s', textAlign: 'left' };
+  const optBtnStyle = (o) => ({
+    width: '100%', background: hovOpt === o ? '#e8e2d4' : '#f5f0e8', border: '1px solid ' + (hovOpt === o ? '#b8922e' : '#d8d0be'),
+    borderRadius: 3, padding: '13px 18px', color: hovOpt === o ? '#1a1410' : '#5a4e40', fontSize: 14, cursor: 'pointer',
+    marginBottom: 9, textAlign: 'left', fontFamily: 'Georgia, serif', transition: 'all 0.15s',
+  });
+
+  const dropdownStyle = {
+    width: '100%', background: '#f5f0e8', border: '1px solid #d0c8b4', borderRadius: 3,
+    padding: '14px 16px', fontSize: 15, color: bType ? '#1a1410' : '#9a8e7e',
+    cursor: 'pointer', fontFamily: 'Georgia, serif', display: 'flex', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 4, outline: 'none',
   };
 
-  const optBtnStyle = function(o) {
-    return { width: '100%', background: hovOpt === o ? '#e8e2d4' : '#f5f0e8', border: '1px solid ' + (hovOpt === o ? '#b8922e' : '#d8d0be'), borderRadius: 3, padding: '13px 18px', color: hovOpt === o ? '#1a1410' : '#5a4e40', fontSize: 14, cursor: 'pointer', marginBottom: 9, textAlign: 'left', fontFamily: 'Georgia, serif', transition: 'all 0.15s' };
-  };
+  // Blurred locked section
+  const LockedSection = ({ children, label }) =>
+    React.createElement('div', { style: { position: 'relative', marginBottom: 22 } },
+      React.createElement('div', { style: { filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none', opacity: 0.7 } }, children),
+      React.createElement('div', {
+        style: {
+          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', background: 'rgba(250,247,242,0.5)',
+          borderRadius: 2,
+        }
+      },
+        React.createElement('div', { style: { fontSize: 20, marginBottom: 6 } }, '🔒'),
+        React.createElement('div', { style: { fontSize: 12, color: '#6a5e4e', letterSpacing: '0.08em', textTransform: 'uppercase' } }, label || 'Unlock below to reveal')
+      )
+    );
 
-  return (
-    React.createElement('div', { style: c.wrap },
-      React.createElement('div', { style: c.hdr },
-        React.createElement('button', { style: c.logo, onClick: function() { go(function() { setStep('landing'); }); } }, 'Peakrate'),
-        React.createElement('button', {
-          onMouseEnter: function() { setHovNav(true); },
-          onMouseLeave: function() { setHovNav(false); },
-          onClick: function() { go(function() { setStep('why'); }); },
-          style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'Georgia, serif', color: hovNav ? '#b8922e' : '#9a8e7e', transition: 'color 0.2s', padding: 0 }
-        }, 'Why Peakrate?')
-      ),
-      React.createElement('div', { style: c.card },
-        step === 'landing' && React.createElement('div', null,
-          React.createElement('div', { style: Object.assign({}, c.lbl, { marginBottom: 14 }) }, 'Free Revenue Audit, 3 Minutes'),
-          React.createElement('h1', { style: c.h1 }, 'Find out how much you are leaving behind.'),
-          React.createElement('div', { style: c.gold }),
-          React.createElement('p', { style: c.sub }, 'Answer a few questions about your business. We will calculate your revenue score, estimate your annual gap, identify your event demand blind spots, and show you exactly where to start.'),
-          React.createElement('div', { style: Object.assign({}, c.lbl, { marginBottom: 16 }) }, 'Select your business type'),
-          BUSINESS_TYPES.map(function(bt) {
-            return React.createElement('button', { key: bt.id, style: bizBtnStyle(bt.id), onMouseEnter: function() { setHovBiz(bt.id); }, onMouseLeave: function() { setHovBiz(null); }, onClick: function() { selectBiz(bt.id); } },
-              React.createElement('span', { style: { fontSize: 26 } }, bt.icon),
-              React.createElement('span', { style: { fontSize: 15, color: '#3a2e24' } }, bt.label),
-              React.createElement('span', { style: { marginLeft: 'auto', color: '#9a8e7e', fontSize: 16 } }, '→')
-            );
-          }),
-          React.createElement('div', { style: { marginTop: 36, paddingTop: 20, borderTop: '1px solid #e0d8c8', fontSize: 12, color: '#b0a898', lineHeight: 1.7 } },
-            'Built by Dom Smith · Over a decade of experience across global airlines and major organizations · Now helping small businesses capture what they are leaving on the table'
+  return React.createElement('div', { style: c.wrap },
+    React.createElement('div', { style: c.hdr },
+      React.createElement('button', { style: c.logo, onClick: () => go(() => setStep('landing')) }, 'Peakrate'),
+      React.createElement('button', {
+        onMouseEnter: () => setHovNav(true), onMouseLeave: () => setHovNav(false),
+        onClick: () => go(() => setStep('why')),
+        style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'Georgia, serif', color: hovNav ? '#b8922e' : '#9a8e7e', transition: 'color 0.2s', padding: 0 }
+      }, 'Why Peakrate?')
+    ),
+
+    React.createElement('div', { style: c.card },
+
+      // ── LANDING ──────────────────────────────────────────────
+      step === 'landing' && React.createElement('div', null,
+        React.createElement('div', { style: { ...c.lbl, marginBottom: 14 } }, 'Free Revenue Audit · 3 Minutes'),
+        React.createElement('h1', { style: c.h1 }, 'Find out how much you are leaving behind.'),
+        React.createElement('div', { style: c.gold }),
+        React.createElement('p', { style: c.sub }, 'Answer a few questions about your business. We will calculate your revenue score, estimate your annual gap, and show you exactly where to start.'),
+        React.createElement('div', { style: { ...c.lbl, marginBottom: 12 } }, 'Select your business type'),
+        React.createElement('div', { style: { position: 'relative', marginBottom: 20 } },
+          React.createElement('button', { style: dropdownStyle, onClick: () => setDropdownOpen(!dropdownOpen) },
+            React.createElement('span', null, selectedLabel && selectedLabel.icon ? `${selectedLabel.icon}  ${selectedLabel.label}` : 'Select your business type...'),
+            React.createElement('span', { style: { color: '#b8922e', fontSize: 18, transition: 'transform 0.2s', display: 'inline-block', transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' } }, '▾')
+          ),
+          dropdownOpen && React.createElement('div', {
+            style: { position: 'absolute', top: '100%', left: 0, right: 0, background: '#faf7f2', border: '1px solid #d0c8b4', borderTop: 'none', borderRadius: '0 0 3px 3px', zIndex: 100, boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }
+          },
+            BUSINESS_TYPES.filter(b => b.id).map(bt =>
+              React.createElement('button', {
+                key: bt.id, onClick: () => selectBiz(bt.id),
+                style: { width: '100%', background: bType === bt.id ? '#e8e2d4' : 'transparent', border: 'none', borderBottom: '1px solid #ede8de', padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', fontFamily: 'Georgia, serif', fontSize: 14, color: '#3a2e24', textAlign: 'left' }
+              },
+                React.createElement('span', { style: { fontSize: 20 } }, bt.icon),
+                React.createElement('span', null, bt.label),
+                bType === bt.id && React.createElement('span', { style: { marginLeft: 'auto', color: '#b8922e' } }, '✓')
+              )
+            )
           )
         ),
+        React.createElement('button', {
+          style: { ...c.pBtn, opacity: bType ? 1 : 0.45, cursor: bType ? 'pointer' : 'not-allowed' },
+          onClick: startAudit, disabled: !bType,
+        }, 'Start My Free Audit →'),
+        React.createElement('div', { style: { marginTop: 36, paddingTop: 20, borderTop: '1px solid #e0d8c8', fontSize: 12, color: '#b0a898', lineHeight: 1.7 } },
+          'Built by Dom Smith · Revenue management experience across global airlines and major organizations · Now helping small businesses capture what they are leaving on the table'
+        )
+      ),
 
-        step === 'questions' && questions.length > 0 && React.createElement('div', null,
-          React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 } },
-            React.createElement('button', { style: c.back, onClick: function() { go(function() { setStep('landing'); }); } }, 'Back'),
-            React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
-              isEventQ && React.createElement('div', { style: { fontSize: 10, color: '#b8922e', letterSpacing: '0.15em', textTransform: 'uppercase', background: '#fdfae8', padding: '3px 8px', borderRadius: 2 } }, 'Event Intelligence'),
-              React.createElement('div', { style: { fontSize: 12, color: '#9a8e7e' } }, (currentQ + 1) + ' / ' + questions.length)
-            )
+      // ── QUESTIONS ────────────────────────────────────────────
+      step === 'questions' && questions.length > 0 && React.createElement('div', null,
+        React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 } },
+          React.createElement('button', { style: c.back, onClick: () => go(() => setStep('landing')) }, 'Back'),
+          React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+            isEventQ && React.createElement('div', { style: { fontSize: 10, color: '#b8922e', letterSpacing: '0.15em', textTransform: 'uppercase', background: '#fdfae8', padding: '3px 8px', borderRadius: 2 } }, 'Event Intelligence'),
+            React.createElement('div', { style: { fontSize: 12, color: '#9a8e7e' } }, `${currentQ + 1} / ${questions.length}`)
+          )
+        ),
+        React.createElement('div', { style: c.prog }, React.createElement('div', { style: c.progFill })),
+        currentQ === baseQCount && bType !== 'photo' && bType !== 'restaurant' && React.createElement('div', { style: { background: '#fdfae8', border: '1px solid #d8d0be', borderLeft: '3px solid #b8922e', padding: '14px 18px', borderRadius: 2, marginBottom: 26 } },
+          React.createElement('div', { style: { fontSize: 10, color: '#b8922e', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 5 } }, 'Now: Event Demand Analysis'),
+          React.createElement('div', { style: { fontSize: 13, color: '#7a6e5e', lineHeight: 1.65 } }, 'One-time events can inflate your historical data and distort your forecast for years. These questions identify whether you are pricing around local demand or being misled by it.')
+        ),
+        React.createElement('div', { style: c.lbl }, isEventQ ? 'Event Demand Intelligence' : `${typeLabel} · Revenue Audit`),
+        React.createElement('div', { style: { fontSize: 22, color: '#1a1410', fontWeight: 400, lineHeight: 1.4, marginBottom: 28 } }, questions[currentQ].label),
+        questions[currentQ].options.map(opt =>
+          React.createElement('button', { key: opt, style: optBtnStyle(opt), onMouseEnter: () => setHovOpt(opt), onMouseLeave: () => setHovOpt(null), onClick: () => answer(questions[currentQ].id, opt) }, opt)
+        )
+      ),
+
+      // ── RESULTS ──────────────────────────────────────────────
+      step === 'results' && React.createElement('div', null,
+
+        // Score + AI (always visible)
+        React.createElement('div', { style: c.lbl }, `Your Revenue Audit · ${typeLabel}`),
+        React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 24, marginBottom: 22 } },
+          React.createElement('div', { style: c.circle },
+            React.createElement('div', { style: { fontSize: 30, color: si.color, fontWeight: 300, lineHeight: 1 } }, score),
+            React.createElement('div', { style: { fontSize: 11, color: '#9a8e7e', marginTop: 2 } }, '/ 100')
           ),
-          React.createElement('div', { style: c.prog }, React.createElement('div', { style: c.progFill })),
-          currentQ === baseQCount && bType !== 'photo' && React.createElement('div', { style: { background: '#fdfae8', border: '1px solid #d8d0be', borderLeft: '3px solid #b8922e', padding: '14px 18px', borderRadius: 2, marginBottom: 26 } },
-            React.createElement('div', { style: { fontSize: 10, color: '#b8922e', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 5 } }, 'Now: Event Demand Analysis'),
-            React.createElement('div', { style: { fontSize: 13, color: '#7a6e5e', lineHeight: 1.65 } }, 'One-time events can inflate your historical data and distort your forecast for years. These questions identify whether you are pricing around local demand or being misled by it.')
-          ),
-          React.createElement('div', { style: c.lbl }, isEventQ ? 'Event Demand Intelligence' : typeLabel + ' · Revenue Audit'),
-          React.createElement('div', { style: { fontSize: 22, color: '#1a1410', fontWeight: 400, lineHeight: 1.4, marginBottom: 28 } }, questions[currentQ].label),
-          questions[currentQ].options.map(function(opt) {
-            return React.createElement('button', { key: opt, style: optBtnStyle(opt), onMouseEnter: function() { setHovOpt(opt); }, onMouseLeave: function() { setHovOpt(null); }, onClick: function() { answer(questions[currentQ].id, opt); } }, opt);
-          })
+          React.createElement('div', null,
+            React.createElement('div', { style: { fontSize: 20, color: si.color, marginBottom: 6 } }, si.label),
+            React.createElement('div', { style: { fontSize: 13, color: '#6a5e4e', lineHeight: 1.65, maxWidth: 380 } }, si.desc)
+          )
+        ),
+        React.createElement('div', { style: c.aiBox },
+          React.createElement('div', { style: { fontSize: 10, color: '#9a8e7e', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 } }, "Consultant's Read"),
+          loadingAI
+            ? React.createElement('div', { style: { fontSize: 13, color: '#9a8e7e', fontStyle: 'italic' } }, 'Analyzing your results...')
+            : React.createElement('div', { style: { fontSize: 14, color: '#5a4e40', lineHeight: 1.8, fontStyle: 'italic' } }, aiInsight || 'Your answers reveal clear, addressable gaps in your revenue strategy — the kind that compound quietly over years without a structured RM approach.'),
+          React.createElement('div', { style: { position: 'absolute', bottom: 12, right: 16, fontSize: 10, color: '#b0a898' } }, 'Dom Smith · Peakrate')
         ),
 
-        step === 'results' && React.createElement('div', null,
-          React.createElement('div', { style: c.lbl }, 'Your Revenue Audit · ' + typeLabel),
-          React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 24, marginBottom: 22 } },
-            React.createElement('div', { style: c.circle },
-              React.createElement('div', { style: { fontSize: 30, color: si.color, fontWeight: 300, lineHeight: 1 } }, score),
-              React.createElement('div', { style: { fontSize: 11, color: '#9a8e7e', marginTop: 2 } }, '/ 100')
-            ),
-            React.createElement('div', null,
-              React.createElement('div', { style: { fontSize: 20, color: si.color, marginBottom: 6 } }, si.label),
-              React.createElement('div', { style: { fontSize: 13, color: '#6a5e4e', lineHeight: 1.65, maxWidth: 380 } }, si.desc)
+        // Revenue Gap — locked or unlocked
+        !unlocked
+          ? React.createElement(LockedSection, { label: 'Unlock to see your revenue gap' },
+              React.createElement('div', { style: c.leakBox },
+                React.createElement('div', { style: { fontSize: 11, color: '#b8922e', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 } }, 'Estimated Annual Revenue Gap'),
+                React.createElement('div', { style: { fontSize: 34, color: '#1a1410', fontWeight: 300 } }, '$$$'),
+                React.createElement('div', { style: { fontSize: 14, color: '#8a7e6e', marginTop: 4 } }, '$XX,XXX – $XX,XXX / yr'),
+                React.createElement('div', { style: { fontSize: 12, color: '#8a7e6e', marginTop: 4, fontStyle: 'italic' } }, 'Based on your current strategy vs. optimized RM benchmarks for your business type')
+              )
             )
+          : React.createElement('div', { style: c.leakBox },
+              React.createElement('div', { style: { fontSize: 11, color: '#b8922e', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 } }, 'Estimated Annual Revenue Gap'),
+              React.createElement('div', { style: { fontSize: 34, color: '#1a1410', fontWeight: 300 } }, leakage <= 5000 ? '$' : leakage <= 15000 ? '$$' : leakage <= 40000 ? '$$$' : '$$$$'),
+              React.createElement('div', { style: { fontSize: 14, color: '#8a7e6e', marginTop: 4 } }, `Estimated range: ${leakLabel}`),
+              React.createElement('div', { style: { fontSize: 12, color: '#8a7e6e', marginTop: 4, fontStyle: 'italic' } }, 'Based on your current strategy vs. optimized RM benchmarks for your business type'),
+              answers.events_onetime && answers.events_onetime.includes('assumed') && React.createElement('div', { style: { marginTop: 12, padding: '10px 14px', background: '#fdf0f0', border: '1px solid #fca5a5', borderRadius: 2, fontSize: 12, color: '#dc2626', lineHeight: 1.6 } }, 'Forecast risk: A one-time event spike may be inflating your revenue baseline. That demand will not return, and pricing as if it will costs you.')
+            ),
+
+        // Recommendations — locked or unlocked
+        !unlocked
+          ? React.createElement(LockedSection, { label: 'Unlock to see your recommendations' },
+              React.createElement('div', null,
+                React.createElement('div', { style: c.lbl }, 'Recommendations'),
+                [1, 2, 3].map(i =>
+                  React.createElement('div', { key: i, style: { background: '#f0ebe0', border: '1px solid #ddd6c6', padding: '15px 18px', borderRadius: 2, marginBottom: 8, display: 'flex', gap: 12 } },
+                    React.createElement('div', { style: { fontSize: 17, color: '#c8bea8', fontWeight: 700, minWidth: 22 } }, `0${i}`),
+                    React.createElement('div', { style: { fontSize: 13, color: '#6a5e4e', lineHeight: 1.7, flex: 1 } }, 'Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.')
+                  )
+                )
+              )
+            )
+          : React.createElement('div', null,
+              emailSent && React.createElement('div', { style: { background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 2, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#166534' } },
+                `✓ Your full report has been sent to ${contact.email}`
+              ),
+              React.createElement('div', { style: c.lbl }, 'Recommendations'),
+              recs.map((rec, i) =>
+                React.createElement('div', { key: i, style: { background: rec.event ? '#edf5e8' : '#f0ebe0', border: `1px solid ${rec.event ? '#c8d8b8' : '#ddd6c6'}`, padding: '15px 18px', borderRadius: 2, marginBottom: 8, display: 'flex', gap: 12, alignItems: 'flex-start' } },
+                  React.createElement('div', { style: { fontSize: 17, color: rec.event ? '#a8c898' : '#c8bea8', fontWeight: 700, minWidth: 22, paddingTop: 2 } }, `0${i + 1}`),
+                  React.createElement('div', { style: { fontSize: 13, color: rec.event ? '#4a7040' : '#6a5e4e', lineHeight: 1.7, flex: 1 } }, rec.text),
+                  rec.event && React.createElement('div', { style: { fontSize: 10, color: '#4a6838', paddingTop: 2, flexShrink: 0 } }, 'Event RM')
+                )
+              )
+            ),
+
+        // ── UPSELL CARD (always visible, above the gate) ──────
+        !unlocked && React.createElement('div', { style: { background: '#1a1410', borderRadius: 3, padding: '28px 28px 24px', marginBottom: 24, marginTop: 8 } },
+          React.createElement('div', { style: { fontSize: 10, color: '#b8922e', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 10 } }, 'Want to go deeper?'),
+          React.createElement('div', { style: { fontSize: 22, color: '#faf7f2', fontWeight: 400, lineHeight: 1.3, marginBottom: 12, letterSpacing: '-0.01em' } }, 'This audit is just the surface.'),
+          React.createElement('div', { style: { fontSize: 14, color: '#b0a090', lineHeight: 1.75, marginBottom: 20 } },
+            'A full Peakrate audit is a deep dive into your actual pricing structure, booking patterns, and revenue gaps — with tailored recommendations built specifically for your business. Not a generic report. A real engagement.'
           ),
-          React.createElement('div', { style: c.leakBox },
-            React.createElement('div', { style: { fontSize: 11, color: '#b8922e', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 } }, 'Estimated Annual Revenue Gap'),
-            React.createElement('div', { style: { fontSize: 34, color: '#1a1410', fontWeight: 300 } }, leakage <= 5000 ? '$' : leakage <= 15000 ? '$$' : leakage <= 40000 ? '$$$' : '$$$$'),
-            React.createElement('div', { style: { fontSize: 14, color: '#8a7e6e', marginTop: 4 } }, 'Estimated range: ' + (leakage <= 5000 ? 'Under $5K/yr' : leakage <= 15000 ? '$5K-$15K/yr' : leakage <= 40000 ? '$15K-$40K/yr' : '$40K+/yr')),
-            React.createElement('div', { style: { fontSize: 12, color: '#8a7e6e', marginTop: 4, fontStyle: 'italic' } }, 'Based on your current strategy vs. optimized RM benchmarks for your business type'),
-            answers.events_onetime && answers.events_onetime.includes('assumed') && React.createElement('div', { style: { marginTop: 12, padding: '10px 14px', background: '#fdf0f0', border: '1px solid #fca5a5', borderRadius: 2, fontSize: 12, color: '#dc2626', lineHeight: 1.6 } }, 'Forecast risk: A one-time event spike may be inflating your revenue baseline. That demand will not return, and pricing as if it will costs you.')
+          React.createElement('div', { style: { display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 } },
+            React.createElement('div', { style: { fontSize: 28, color: '#faf7f2', fontWeight: 300 } }, '$500'),
+            React.createElement('div', { style: { fontSize: 12, color: '#b8922e', letterSpacing: '0.1em', textTransform: 'uppercase' } }, 'Early Adopter Rate')
           ),
-          React.createElement('div', { style: c.aiBox },
-            React.createElement('div', { style: { fontSize: 10, color: '#9a8e7e', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 } }, 'Consultant\'s Read'),
-            loadingAI
-              ? React.createElement('div', { style: { fontSize: 13, color: '#9a8e7e', fontStyle: 'italic' } }, 'Analyzing your results...')
-              : React.createElement('div', { style: { fontSize: 14, color: '#5a4e40', lineHeight: 1.8, fontStyle: 'italic' } }, aiInsight || 'Your answers reveal clear, addressable gaps in your revenue strategy, the kind that compound quietly over years without a structured RM approach.'),
-            React.createElement('div', { style: { position: 'absolute', bottom: 12, right: 16, fontSize: 10, color: '#b0a898' } }, 'Dom Smith · Peakrate')
+          React.createElement('div', { style: { fontSize: 12, color: '#7a6e5e', marginBottom: 20, lineHeight: 1.6 } },
+            'This rate is for our first clients. Once we have enough volume, the full audit price will increase. Consultations are always free.'
           ),
-          React.createElement('div', { style: c.lbl }, 'Recommendations'),
-          recs.map(function(rec, i) {
-            return React.createElement('div', { key: i, style: { background: rec.event ? '#edf5e8' : '#f0ebe0', border: '1px solid ' + (rec.event ? '#c8d8b8' : '#ddd6c6'), padding: '15px 18px', borderRadius: 2, marginBottom: 8, display: 'flex', gap: 12, alignItems: 'flex-start' } },
-              React.createElement('div', { style: { fontSize: 17, color: rec.event ? '#a8c898' : '#c8bea8', fontWeight: 700, minWidth: 22, paddingTop: 2 } }, '0' + (i + 1)),
-              React.createElement('div', { style: { fontSize: 13, color: rec.event ? '#4a7040' : '#6a5e4e', lineHeight: 1.7, flex: 1 } }, rec.text),
-              rec.event && React.createElement('div', { style: { fontSize: 10, color: '#4a6838', paddingTop: 2, flexShrink: 0 } }, 'Event RM')
-            );
-          }),
+          React.createElement('button', {
+            onClick: () => window.open('https://calendly.com/peakrate/30min', '_blank'),
+            style: { background: '#b8922e', color: '#faf7f2', border: 'none', borderRadius: 2, padding: '13px 24px', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 700 }
+          }, 'Book a Free Consultation →')
+        ),
+
+        // ── EMAIL GATE ────────────────────────────────────────
+        !unlocked && React.createElement('div', { style: { background: '#f5f0e8', border: '1px solid #d0c8b4', borderRadius: 3, padding: '28px 28px 24px', marginBottom: 24 } },
+          React.createElement('div', { style: { fontSize: 11, color: '#b8922e', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 } }, 'Unlock Your Full Results'),
+          React.createElement('div', { style: { fontSize: 20, color: '#1a1410', fontWeight: 400, marginBottom: 8, lineHeight: 1.3 } }, 'Your revenue gap and recommendations are ready.'),
+          React.createElement('div', { style: { fontSize: 14, color: '#7a6e5e', lineHeight: 1.7, marginBottom: 22 } },
+            'Enter your name and email to unlock the rest — free. We will also send you the full report to keep.'
+          ),
+          React.createElement('input', { style: c.inp, placeholder: 'Your name', value: contact.name, onChange: e => setContact(p => ({ ...p, name: e.target.value })) }),
+          React.createElement('input', { style: c.inp, placeholder: 'Email address', value: contact.email, onChange: e => setContact(p => ({ ...p, email: e.target.value })) }),
+          React.createElement('input', { style: c.inp, placeholder: 'Phone (optional)', value: contact.phone, onChange: e => setContact(p => ({ ...p, phone: e.target.value })) }),
+          React.createElement('button', {
+            style: { ...c.pBtn, opacity: contact.name && contact.email ? 1 : 0.45, cursor: contact.name && contact.email ? 'pointer' : 'not-allowed', marginTop: 4, marginBottom: 0 },
+            onClick: submitUnlock,
+            disabled: !contact.name || !contact.email || unlocking,
+          }, unlocking ? 'Unlocking...' : 'Show My Full Results →'),
+          React.createElement('div', { style: { fontSize: 11, color: '#b0a898', textAlign: 'center', marginTop: 10 } }, 'No spam. Unsubscribe any time.')
+        ),
+
+        // ── POST-UNLOCK BOTTOM SECTION ────────────────────────
+        unlocked && React.createElement('div', null,
           React.createElement('div', { style: c.divider }),
+
+          // Ways to work together
           React.createElement('div', { style: { marginBottom: 28 } },
             React.createElement('div', { style: c.lbl }, 'Ways To Work Together'),
-            React.createElement('p', { style: { fontSize: 14, color: '#7a6e5e', lineHeight: 1.7, marginBottom: 20 } }, 'Every engagement starts with a free 30-minute call. Pricing below is based on your business type and scope.'),
-            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12 } },
+            React.createElement('p', { style: { fontSize: 14, color: '#7a6e5e', lineHeight: 1.7, marginBottom: 20 } }, 'Every engagement starts with a free 30-minute call. No pitch, no pressure.'),
+            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 } },
               [
-                { title: 'Free Consultation', price: 'Free', period: '30 minutes', desc: 'Start here. We review your audit results together and figure out the best path forward. No pitch, no pressure.', features: ['Review your audit results', 'Identify your top revenue gaps', 'Walk through service options', 'No obligation'], highlight: false, free: true },
-                { title: 'One-Time Audit', price: 'Starting from ' + pricing.auditStart, period: 'one time', desc: 'Full pricing audit, rate recommendations, and a 90-day action plan.', features: ['Complete pricing analysis', 'Package structure redesign', '12-month demand calendar', 'Written action plan'], highlight: false, free: false },
-                { title: 'Monthly Retainer', price: 'Starting from ' + pricing.retainerStart, period: 'per month', desc: 'Monthly strategy calls, performance reviews, and ongoing pricing guidance.', features: ['Monthly 1-on-1 strategy call', 'Performance tracking', 'Seasonal rate adjustments', 'Event demand monitoring'], highlight: true, free: false },
-                { title: 'Done For You', price: 'Starting from ' + pricing.doneStart, period: 'per month', desc: 'We manage your pricing directly. You focus on running your business.', features: ['Direct pricing management', 'Weekly rate monitoring', 'Event and demand response', 'Monthly revenue report'], highlight: false, free: false },
-              ].map(function(tier, i) {
-                return React.createElement('div', { key: i, style: { background: tier.highlight ? '#f5f0e8' : '#faf7f2', border: '1px solid ' + (tier.highlight ? '#b8922e' : '#d8d0be'), borderTop: '3px solid ' + (tier.highlight ? '#b8922e' : '#d8d0be'), borderRadius: 3, padding: '20px 16px', position: 'relative' } },
+                { title: 'Free Consultation', price: 'Free', period: '30 minutes', desc: 'We review your audit results together and figure out the best path forward.', features: ['Review your audit results', 'Identify your top revenue gaps', 'Walk through service options', 'No obligation'], highlight: false, free: true },
+                { title: 'Full Audit', price: '$500', period: 'early adopter rate', desc: 'Deep dive into your pricing structure, booking patterns, and a tailored 90-day action plan.', features: ['Complete pricing analysis', 'Package structure redesign', '12-month demand calendar', 'Written action plan'], highlight: true, free: false },
+                { title: 'Ongoing Strategy', price: 'Custom', period: 'monthly', desc: 'Regular strategy sessions, performance reviews, and pricing guidance as your business grows.', features: ['Monthly 1-on-1 strategy call', 'Performance tracking', 'Seasonal rate adjustments', 'Event demand monitoring'], highlight: false, free: false },
+              ].map((tier, i) =>
+                React.createElement('div', { key: i, style: { background: tier.highlight ? '#f5f0e8' : '#faf7f2', border: `1px solid ${tier.highlight ? '#b8922e' : '#d8d0be'}`, borderTop: `3px solid ${tier.highlight ? '#b8922e' : '#d8d0be'}`, borderRadius: 3, padding: '20px 16px', position: 'relative' } },
                   tier.highlight && React.createElement('div', { style: { position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%) translateY(-50%)', background: '#b8922e', color: '#faf7f2', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: 10, whiteSpace: 'nowrap' } }, 'Most Popular'),
                   React.createElement('div', { style: { fontSize: 12, color: '#b8922e', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, fontWeight: 600 } }, tier.title),
-                  React.createElement('div', { style: { fontSize: tier.free ? 22 : 16, color: tier.free ? '#22c55e' : '#1a1410', fontWeight: 300, marginBottom: 2 } }, tier.price),
+                  React.createElement('div', { style: { fontSize: tier.free ? 22 : 20, color: tier.free ? '#22c55e' : '#1a1410', fontWeight: 300, marginBottom: 2 } }, tier.price),
                   React.createElement('div', { style: { fontSize: 11, color: '#9a8e7e', marginBottom: 12 } }, tier.period),
                   React.createElement('div', { style: { fontSize: 12, color: '#7a6e5e', lineHeight: 1.65, marginBottom: 14 } }, tier.desc),
-                  tier.features.map(function(f, j) {
-                    return React.createElement('div', { key: j, style: { fontSize: 12, color: '#6a5e4e', marginBottom: 6, display: 'flex', gap: 6, alignItems: 'flex-start' } },
-                      React.createElement('span', { style: { color: '#b8922e', flexShrink: 0 } }, '✓'),
-                      f
-                    );
-                  }),
-                  tier.free && React.createElement('button', { onClick: function() { window.open('https://calendly.com/peakrate/30min', '_blank'); }, style: { marginTop: 14, width: '100%', background: '#1a1410', color: '#faf7f2', border: 'none', borderRadius: 2, padding: '10px', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 700 } }, 'Book Now')
-                );
-              })
-            ),
-            React.createElement('div', { style: { fontSize: 12, color: '#9a8e7e', marginTop: 12, fontStyle: 'italic', textAlign: 'center' } }, 'All prices are starting rates and are subject to increase based on business size and complexity. Final pricing confirmed after your free consultation.')
-          ),
-          React.createElement('div', { style: c.divider }),
-          !reportDone && !consultDone
-            ? React.createElement('div', null,
-                React.createElement('div', { style: c.lbl }, 'Next Steps'),
-                React.createElement('p', { style: { fontSize: 14, color: '#7a6e5e', lineHeight: 1.75, marginBottom: 22 } }, 'Get your full report emailed to you, or book a free 30-minute consultation with Dom to walk through your results and build a 90-day action plan.'),
-                React.createElement('input', { style: c.inp, placeholder: 'Your name', value: contact.name, onChange: function(e) { setContact(function(p) { return Object.assign({}, p, { name: e.target.value }); }); } }),
-                React.createElement('input', { style: c.inp, placeholder: 'Email address', value: contact.email, onChange: function(e) { setContact(function(p) { return Object.assign({}, p, { email: e.target.value }); }); } }),
-                React.createElement('input', { style: c.inp, placeholder: 'Phone (optional)', value: contact.phone, onChange: function(e) { setContact(function(p) { return Object.assign({}, p, { phone: e.target.value }); }); } }),
-                React.createElement('button', { style: c.pBtn, onClick: function() { if (contact.email) { setConsultDone(true); window.open('https://calendly.com/peakrate/30min', '_blank'); } } }, 'Book Free 30-Min Consultation'),
-                React.createElement('button', { style: c.sBtn, onClick: function() { if (contact.email) setReportDone(true); } }, 'Send Me the Full Report')
+                  tier.features.map((f, j) =>
+                    React.createElement('div', { key: j, style: { fontSize: 12, color: '#6a5e4e', marginBottom: 6, display: 'flex', gap: 6, alignItems: 'flex-start' } },
+                      React.createElement('span', { style: { color: '#b8922e', flexShrink: 0 } }, '✓'), f
+                    )
+                  ),
+                  React.createElement('button', {
+                    onClick: () => window.open('https://calendly.com/peakrate/30min', '_blank'),
+                    style: { marginTop: 14, width: '100%', background: tier.highlight ? '#b8922e' : '#1a1410', color: '#faf7f2', border: 'none', borderRadius: 2, padding: '10px', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 700 }
+                  }, tier.free ? 'Book Now' : 'Start with a Free Call')
+                )
               )
-            : React.createElement('div', { style: c.ok },
-                consultDone
-                  ? React.createElement('span', null, React.createElement('strong', null, 'Consultation request received.'), React.createElement('br', null), 'Dom will reach out to ' + contact.email + ' within 24 hours to schedule your free session. Come ready to talk numbers.')
-                  : React.createElement('span', null, React.createElement('strong', null, 'Report on its way.'), React.createElement('br', null), 'Your full revenue audit will be sent to ' + contact.email + ' within the hour.')
+            ),
+            React.createElement('div', { style: { fontSize: 12, color: '#9a8e7e', marginTop: 12, fontStyle: 'italic', textAlign: 'center' } }, 'Full audit rate is $500 for early clients and will increase once capacity is filled. Consultations are always free.')
+          ),
+
+          React.createElement('div', { style: c.divider }),
+          !consultDone
+            ? React.createElement('div', null,
+                React.createElement('div', { style: c.lbl }, 'Book Your Free Call'),
+                React.createElement('p', { style: { fontSize: 14, color: '#7a6e5e', lineHeight: 1.75, marginBottom: 16 } }, 'Ready to walk through your results with Dom directly? 30 minutes, no pitch, no pressure.'),
+                React.createElement('button', { style: c.pBtn, onClick: () => { setConsultDone(true); window.open('https://calendly.com/peakrate/30min', '_blank'); } }, 'Book Free 30-Min Consultation')
+              )
+            : React.createElement('div', { style: { background: '#f0fdf4', border: '1px solid #22c55e', borderRadius: 2, padding: '16px 20px', marginTop: 8, fontSize: 13, color: '#166534', lineHeight: 1.65 } },
+                React.createElement('strong', null, 'Consultation request received.'), React.createElement('br', null),
+                `Dom will reach out to ${contact.email} within 24 hours to schedule your free session. Come ready to talk numbers.`
               ),
           React.createElement('div', { style: c.divider }),
           React.createElement('button', { style: c.back, onClick: reset }, 'Start Over')
-        ),
+        )
+      ),
 
-        step === 'why' && React.createElement('div', null,
-          React.createElement('button', { style: c.back, onClick: function() { go(function() { setStep('landing'); }); } }, 'Back to Audit'),
-          React.createElement('div', { style: { marginTop: 36 } },
-            React.createElement('div', { style: c.lbl }, 'Why Peakrate?'),
-            React.createElement('h1', { style: Object.assign({}, c.h1, { fontSize: 30, marginBottom: 20 }) }, 'You deserve the same strategy the big guys use.'),
-            React.createElement('div', { style: c.gold }),
-            React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 24 } }, 'When you work with Peakrate you are not getting handed off to a junior analyst who has never run a business. You are not getting a 40-page report that sits in your inbox unread. You are getting me, Dom, directly. One on one. Someone who has sat inside the revenue management operations of one of the largest airlines in the world and who also watched his wife, a talented photographer, wonder why some months outperformed others with no clear reason why.'),
-            React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 24 } }, 'I know both worlds. And I built this to bridge them.'),
-            React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 36 } }, 'Big consulting firms charge big firm prices for big firm problems. Your business does not have a big firm problem. It has a fixable pricing and demand problem that nobody has ever walked you through. That is a different conversation, shorter, more direct, and actually useful.'),
-            React.createElement('div', { style: { background: '#f0ebe0', border: '1px solid #d0c8b4', borderLeft: '3px solid #b8922e', padding: '24px 28px', borderRadius: 2, marginBottom: 32 } },
-              React.createElement('div', { style: c.lbl }, 'The Background'),
-              React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 } },
-                [
-                  { icon: '✈️', org: 'Major U.S. Airline', role: 'Senior Revenue Management Professional', note: 'Managed billion dollar fare portfolios across the U.S. and Canada, leading pricing strategy across multiple high-volume markets simultaneously.' },
-                  { icon: '🐠', org: 'Major Hospitality Organization', role: 'Hospitality Revenue Strategist', note: 'Led revenue strategy for one of the largest attractions in the country, including building financial models and ROI frameworks for major capital investments.' },
-                  { icon: '🏦', org: 'Regional Financial Institution', role: 'Financial Strategy Professional / Consumer Finance Specialist', note: 'Drove financial strategy and consumer lending performance, applying data-driven analysis to improve portfolio outcomes.' },
-                ].map(function(item, i) {
-                  return React.createElement('div', { key: i },
-                    React.createElement('div', { style: { fontSize: 22, marginBottom: 8 } }, item.icon),
-                    React.createElement('div', { style: { fontSize: 13, color: '#b8922e', marginBottom: 3, letterSpacing: '0.05em' } }, item.org),
-                    React.createElement('div', { style: { fontSize: 12, color: '#3a2e24', marginBottom: 6 } }, item.role),
-                    React.createElement('div', { style: { fontSize: 12, color: '#8a7e6e', lineHeight: 1.6, fontStyle: 'italic' } }, item.note)
-                  );
-                })
-              )
-            ),
-            React.createElement('div', { style: c.lbl }, 'The Difference'),
-            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 32 } },
+      // ── WHY PAGE ─────────────────────────────────────────────
+      step === 'why' && React.createElement('div', null,
+        React.createElement('button', { style: c.back, onClick: () => go(() => setStep('landing')) }, 'Back to Audit'),
+        React.createElement('div', { style: { marginTop: 36 } },
+          React.createElement('div', { style: c.lbl }, 'Why Peakrate?'),
+          React.createElement('h1', { style: { ...c.h1, fontSize: 30, marginBottom: 20 } }, 'You deserve the same strategy the big guys use.'),
+          React.createElement('div', { style: c.gold }),
+          React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 24 } }, 'When you work with Peakrate you are not getting handed off to a junior analyst who has never run a business. You are not getting a 40-page report that sits in your inbox unread. You are getting me, Dom, directly. One on one.'),
+          React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 24 } }, 'I know both worlds. And I built this to bridge them.'),
+          React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85, marginBottom: 36 } }, 'Big consulting firms charge big firm prices for big firm problems. Your business does not have a big firm problem. It has a fixable pricing and demand problem that nobody has ever walked you through. That is a different conversation, shorter, more direct, and actually useful.'),
+          React.createElement('div', { style: { background: '#f0ebe0', border: '1px solid #d0c8b4', borderLeft: '3px solid #b8922e', padding: '24px 28px', borderRadius: 2, marginBottom: 32 } },
+            React.createElement('div', { style: c.lbl }, 'The Background'),
+            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 } },
               [
-                { icon: '✗', label: 'Big Consulting Firm', points: ['Junior analyst you have never met', 'Generic 40-page report', 'Enterprise pricing, small business budget', 'One size fits all strategy', 'Gone after the engagement'] },
-                { icon: '✓', label: 'Peakrate', points: ['1-on-1 conversations, every time', 'Plain language action plan', 'Multi-billion dollar strategy, small business price', 'Built around your specific numbers', 'Here when you need adjustments'] },
-              ].map(function(col, i) {
-                return React.createElement('div', { key: i, style: { background: i === 1 ? '#edf5e8' : '#f0ebe0', border: '1px solid ' + (i === 1 ? '#c8d8b8' : '#ddd6c6'), padding: '20px', borderRadius: 2 } },
-                  React.createElement('div', { style: { fontSize: 13, color: i === 1 ? '#4a7040' : '#8a7e6e', letterSpacing: '0.05em', marginBottom: 14, fontWeight: 600 } }, col.icon + ' ' + col.label),
-                  col.points.map(function(p, j) {
-                    return React.createElement('div', { key: j, style: { fontSize: 13, color: i === 1 ? '#4a6838' : '#8a7e6e', lineHeight: 1.5, marginBottom: 8, paddingLeft: 4 } }, p);
-                  })
-                );
-              })
-            ),
-            React.createElement('div', { style: { background: '#f0ebe0', border: '1px solid #d0c8b4', padding: '22px 26px', borderRadius: 2, marginBottom: 32 } },
-              React.createElement('div', { style: c.lbl }, 'Where This Is Going'),
-              React.createElement('div', { style: { fontSize: 15, color: '#6a5e4e', lineHeight: 1.85 } }, 'Peakrate is not a side project. The vision is a full revenue management firm, a team of analysts bringing enterprise-level strategy to small and mid-size businesses across hospitality, events, and creative services. The kind of firm that makes what used to cost $50,000 accessible starting at $249 a month, depending on your business type. But right now it is just me. And honestly that is a feature, not a bug. You get my full attention and someone who is genuinely invested in your success, every step of the way.')
-            ),
-            React.createElement('div', { style: { borderTop: '1px solid #e0d8c8', paddingTop: 24 } },
-              React.createElement('div', { style: { fontSize: 14, color: '#7a6e5e', fontStyle: 'italic', marginBottom: 20 } }, 'Dom Smith, Founder · Peakrate'),
-              React.createElement('button', { style: c.pBtn, onClick: function() { go(function() { setStep('landing'); }); } }, 'Take the Free Audit')
+                { icon: '✈️', org: 'Major U.S. Airline', role: 'Senior Revenue Management Professional', note: 'Managed billion dollar fare portfolios across the U.S. and Canada, leading pricing strategy across multiple high-volume markets simultaneously.' },
+                { icon: '🐠', org: 'Major Hospitality Organization', role: 'Hospitality Revenue Strategist', note: 'Led revenue strategy for one of the largest attractions in the country, including building financial models and ROI frameworks for major capital investments.' },
+                { icon: '🏦', org: 'Regional Financial Institution', role: 'Financial Strategy Professional', note: 'Drove financial strategy and consumer lending performance, applying data-driven analysis to improve portfolio outcomes.' },
+              ].map((item, i) =>
+                React.createElement('div', { key: i },
+                  React.createElement('div', { style: { fontSize: 22, marginBottom: 8 } }, item.icon),
+                  React.createElement('div', { style: { fontSize: 13, color: '#b8922e', marginBottom: 3, letterSpacing: '0.05em' } }, item.org),
+                  React.createElement('div', { style: { fontSize: 12, color: '#3a2e24', marginBottom: 6 } }, item.role),
+                  React.createElement('div', { style: { fontSize: 12, color: '#8a7e6e', lineHeight: 1.6, fontStyle: 'italic' } }, item.note)
+                )
+              )
             )
+          ),
+          React.createElement('div', { style: { borderTop: '1px solid #e0d8c8', paddingTop: 24 } },
+            React.createElement('div', { style: { fontSize: 14, color: '#7a6e5e', fontStyle: 'italic', marginBottom: 20 } }, 'Dom Smith, Founder · Peakrate'),
+            React.createElement('button', { style: c.pBtn, onClick: () => go(() => setStep('landing')) }, 'Take the Free Audit')
           )
         )
       )
